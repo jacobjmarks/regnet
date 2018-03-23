@@ -1,0 +1,23 @@
+extends layout
+
+block content
+    table
+        tr
+            th Regulog ID
+            th Regulon ID
+            th Regulation Type
+            th Effector
+            th Regulator Family
+            th Regulator Name
+            th Pathway
+
+        for regulon in regulons
+            tr
+                td= regulon.regulogId
+                td
+                    a(href=`/sites/${regulon.regulonId}`)= regulon.regulonId
+                td= regulon.regulationType
+                td= regulon.effector
+                td= regulon.regulatorFamily
+                td= regulon.regulatorName
+                td= regulon.pathway

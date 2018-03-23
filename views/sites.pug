@@ -1,0 +1,18 @@
+extends layout
+
+block content
+    table
+        tr
+            th Gene Locus Tag
+            th Gene VIMSS ID
+            th Position
+            th Score
+            th Sequence
+        
+        for site in sites
+            tr
+                td= site.geneLocusTag
+                td= site.geneVIMSSId
+                td= site.position
+                td= site.score
+                td= site.sequence
