@@ -1,5 +1,5 @@
 # RegNet
-#### RegPrecise REST Interface and Site Network DOT Graph Generator
+#### [RegPrecise](http://regprecise.lbl.gov/RegPrecise/) REST Interface and Site Network DOT Graph Generator
 
 Initialise and start the Node application on port 3000: `npm install && npm start`
 
