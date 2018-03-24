@@ -76,17 +76,21 @@ function generateDotGraph(network, cb) {
         return `${parent} -> { ${children.join(' ')} }`;
     }
 
-    let graph = `digraph ${network.genomeId} { node [color=black,style=bold]; edge [color=black,style=bold];\n`;
+    let graph = `digraph G {
+        node [color=black,style=bold];
+        edge [color=black,style=bold];\n`;
 
-    graph += `${network.genomeId}[label="Genome ${network.genomeId}"];`;
-    graph += addChildren(network.genomeId, network.regulons.map((r) => r.regulonId));
-    graph += '\n';
+    graph += `${network.genomeId} [label="Genome ${network.genomeId}"];\n`;
+    graph += `${network.genomeId} -> {${network.regulons.map((r) => r.regulonId).join(' ')}}\n`;
 
     for (let regulon of network.regulons) {
         let id = regulon.regulonId;
-        graph += `subgraph cluster_${id} { node [style=solid]; edge [color="${randomColor({seed: id, luminosity: "bright"})}",style=solid]; ${
-            addChildren(id, regulon.sites.map((s) => s.geneVIMSSId))
-        } }\n`;
+        graph += `${id} [label="(${regulon.regulationType})\\n${regulon.regulatorFamily}:${regulon.regulatorName}"]\n`;
+        graph += `subgraph cluster_${id} {
+            node [style=solid];
+            edge [color="${randomColor({seed: id, luminosity: "bright"})}",style=solid];
+            ${id} -> { ${regulon.sites.map((s) => s.geneVIMSSId).join(' ')} }
+        }\n`;
     }
     
     graph += '}';
