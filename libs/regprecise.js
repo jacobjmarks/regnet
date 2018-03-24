@@ -1,4 +1,5 @@
 const request = require("request");
+const randomColor = require("randomcolor");
 
 module.exports.getGenomes = (cb) => {
     request({
@@ -45,7 +46,18 @@ module.exports.genomeNetwork = (genomeId, type, cb) => {
     let addNode = (regulon, sites) => {
         regulon.sites = sites;
         network.regulons.push(regulon);        
-        if (network.regulons.length == regulonCount) respond();
+        if (network.regulons.length == regulonCount) {
+            switch(type) {
+                case "dot":
+                    generateDotGraph(network, (graph) => {
+                        cb(null, graph);
+                    })
+                    break;
+                case "json":
+                default:
+                    cb(null, network)
+            }
+        }
     }
 
     this.getRegulons(genomeId, (err, regulons) => {
@@ -57,27 +69,27 @@ module.exports.genomeNetwork = (genomeId, type, cb) => {
             })
         }
     })
+}
 
-    function respond() {
-        switch(type) {
-            case "dot":
-                let graph = `digraph ${genomeId} {\n`;
-                for (let regulon of network.regulons) {
-                    graph += `\tsubgraph ${regulon.regulonId} {\n`;
-                    // graph += `\t\tlabel="${regulon.regulonId}";\n`;
-                    graph += `\t\t${regulon.regulonId} -> {\n`;
-                    for (let site of regulon.sites) {
-                        graph += `\t\t\t${site.geneVIMSSId}\n`;
-                    }
-                    graph += '\t\t}\n';
-                    graph += '\t}\n';
-                }
-                graph += `\t${genomeId} -> {${network.regulons.map((r) => r.regulonId).join(' ')}}\n`;
-                graph += '}';
-                return cb(null, graph);
-            case "json":
-            default:
-                cb(null, network)
-        }
+function generateDotGraph(network, cb) {
+    function addChildren(parent, children) {
+        return `${parent} -> { ${children.join(' ')} }`;
     }
+
+    let graph = `digraph ${network.genomeId} { node [color=black]; edge [color=black];\n`;
+
+    graph += `${network.genomeId}[label="Genome ${network.genomeId}"];`;
+    graph += addChildren(network.genomeId, network.regulons.map((r) => r.regulonId));
+    graph += '\n';
+
+    for (let regulon of network.regulons) {
+        let id = regulon.regulonId;
+        graph += `subgraph cluster_${id} { edge [color="${randomColor({seed: id, luminosity: "bright"})}"]; ${
+            addChildren(id, regulon.sites.map((s) => s.geneVIMSSId))
+        } }\n`;
+    }
+    
+    graph += '}';
+
+    cb(graph);
 }
