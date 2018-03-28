@@ -16,7 +16,7 @@ Displays a list of regulons that regulate the given genome.
 Display a list of gene sites for the given regulon.
 
 #### `/network/:genomeID`
-Retrieves a hierarchical network consisting of all regulons and their sites for the given genome.
+Retrieves a hierarchical network consisting of all regulators and their genes for the given genome.
 Can be provided with a query string parameter `type` to indicate the format. Available options are:
 
 * [`json`](http://localhost:3000/network/601?type=json) (default) Network is structed as a json object.
