@@ -34,7 +34,7 @@ app.get("/sites/:regulonId", (req, res) => {
 })
 
 app.get("/network/:genomeId", (req, res) => {
-    regprecise.genomeNetwork(req.params.genomeId, req.query.type, (err, network) => {
+    regprecise.geneRegulationNetwork(req.params.genomeId, req.query.type, (err, network) => {
         if (err) return res.status(500).end(err);
         res.send(network);
         res.end();

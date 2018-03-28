@@ -58,47 +58,63 @@ module.exports.getSites = (regulonId, cb) => {
     })
 }
 
-module.exports.genomeNetwork = (genomeId, type, cb) => {
+module.exports.geneRegulationNetwork = (genomeId, type, cb) => {
     let network = {
         genomeId: genomeId,
-        regulons: []
+        regulators: []
     };
-
-    let regulonCount = 0;
-
-    let addNode = (regulon, sites) => {
-        regulon.sites = sites;
-        network.regulons.push(regulon);        
-        if (network.regulons.length == regulonCount) {
-            switch(type) {
-                case "dot":
-                    generateDotGraph(network, (graph) => {
-                        cb(null, graph);
-                    })
-                    break;
-                case "json":
-                default:
-                    cb(null, network)
-            }
-        }
-    }
 
     this.getRegulons(genomeId, (err, regulons) => {
         if (err) return cb(err);
-        regulonCount = regulons.length;
+
+        let regulatorCount = regulons.length;
+
         for (let regulon of regulons) {
-            this.getSites(regulon["regulonId"], (err, sites) => {
-                addNode(regulon, (!err) ? sites : null);
+            this.getRegulators(regulon.regulonId, (err, regulators) => {
+                if (err) return cb(err);
+                if (!regulators) {
+                    regulatorCount--;
+                    // console.log("NO REGULATORS FOR REGULON: " + regulon.regulonId);
+                    return;
+                }
+                
+                let regulator = regulators[0];
+                regulator.genes = [];
+
+                this.getGenes(regulon.regulonId, (err, genes) => {
+                    if (err) return cb(err);
+
+                    for (let gene of genes) {
+                        if (gene.vimssId != regulator.vimssId) {
+                            regulator.genes.push(gene);
+                        } else {
+                            regulator.function = gene.function;
+                        }
+                    }
+
+                    network.regulators.push(regulator);
+
+                    if (network.regulators.length == regulatorCount) {
+                        network.regulators.sort((a, b) => a.vimssId - b.vimssId);
+                        
+                        switch(type) {
+                            case "dot":
+                                // generateDotGraph(network, (graph) => {
+                                //     cb(null, graph);
+                                // })
+                                // break;
+                            case "json":
+                            default:
+                                cb(null, network)
+                        }
+                    }
+                })
             })
         }
     })
 }
 
 function generateDotGraph(network, cb) {
-    function addChildren(parent, children) {
-        return `${parent} -> { ${children.join(' ')} }`;
-    }
-
     let graph = `digraph G {
         node [color=black,style=bold];
         edge [color=black,style=bold];\n`;
@@ -120,3 +136,62 @@ function generateDotGraph(network, cb) {
 
     cb(graph);
 }
+
+// module.exports.genomeNetwork = (genomeId, type, cb) => {
+//     let network = {
+//         genomeId: genomeId,
+//         regulons: []
+//     };
+
+//     let regulonCount = 0;
+
+//     let addNode = (regulon, sites) => {
+//         regulon.sites = sites;
+//         network.regulons.push(regulon);        
+//         if (network.regulons.length == regulonCount) {
+//             switch(type) {
+//                 case "dot":
+//                     generateDotGraph(network, (graph) => {
+//                         cb(null, graph);
+//                     })
+//                     break;
+//                 case "json":
+//                 default:
+//                     cb(null, network)
+//             }
+//         }
+//     }
+
+//     this.getRegulons(genomeId, (err, regulons) => {
+//         if (err) return cb(err);
+//         regulonCount = regulons.length;
+//         for (let regulon of regulons) {
+//             this.getSites(regulon["regulonId"], (err, sites) => {
+//                 addNode(regulon, (!err) ? sites : null);
+//             })
+//         }
+//     })
+// }
+
+// function generateDotGraph(network, cb) {
+//     let graph = `digraph G {
+//         node [color=black,style=bold];
+//         edge [color=black,style=bold];\n`;
+
+//     graph += `${network.genomeId} [label="Genome ${network.genomeId}"];\n`;
+//     graph += `${network.genomeId} -> {${network.regulons.map((r) => r.regulonId).join(' ')}}\n`;
+
+//     for (let regulon of network.regulons) {
+//         let id = regulon.regulonId;
+//         graph += `${id} [label="(${regulon.regulationType})\\n${regulon.regulatorFamily}:${regulon.regulatorName}"]\n`;
+//         graph += `subgraph cluster_${id} {
+//             node [style=solid];
+//             edge [color="${randomColor({seed: id, luminosity: "bright"})}",style=solid];
+//             ${id} -> { ${regulon.sites.map((s) => s.geneVIMSSId).join(' ')} }
+//         }\n`;
+//     }
+    
+//     graph += '}';
+
+//     cb(graph);
+// }
