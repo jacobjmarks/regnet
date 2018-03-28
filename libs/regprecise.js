@@ -23,13 +23,36 @@ module.exports.getRegulons = (genomeId, cb) => {
     })
 }
 
-module.exports.getSites = (regulonId, cb) => {
+module.exports.getGenes = (regulonId, cb) => {
+    request({
+        method: "GET",
+        url: `http://regprecise.lbl.gov/Services/rest/genes?regulonId=${regulonId}`,
+    }, (error, response, body) => {
+        if (response.statusCode != 200) return cb("Error retrieving genes.");
+        let genes = JSON.parse(body)["gene"];
+        return cb(null, genes.length ? genes : [genes]);
+    })
+}
 
+module.exports.getRegulators = (regulonId, cb) => {
+    request({
+        method: "GET",
+        url: `http://regprecise.lbl.gov/Services/rest/regulators?regulonId=${regulonId}`,
+    }, (error, response, body) => {
+        if (response.statusCode != 200) return cb("Error retrieving regulator.");
+        body = JSON.parse(body);
+        let regulators = body && body["regulator"];
+        if (!regulators) return cb(null, null);
+        return cb(null, regulators.length ? regulators : [regulators]);
+    })
+}
+
+module.exports.getSites = (regulonId, cb) => {
     request({
         method: "GET",
         url: `http://regprecise.lbl.gov/Services/rest/sites?regulonId=${regulonId}`,
     }, (error, response, body) => {
-        if (response.statusCode != 200) return cb("Error retrieving regulons.");
+        if (response.statusCode != 200) return cb("Error retrieving sites.");
         let sites = JSON.parse(body)["site"];
         return cb(null, sites.length ? sites : [sites]);
     })
