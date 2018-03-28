@@ -99,10 +99,10 @@ module.exports.geneRegulationNetwork = (genomeId, type, cb) => {
                         
                         switch(type) {
                             case "dot":
-                                // generateDotGraph(network, (graph) => {
-                                //     cb(null, graph);
-                                // })
-                                // break;
+                                generateDotGraph([network], (graph) => {
+                                    cb(null, graph);
+                                })
+                                break;
                             case "json":
                             default:
                                 cb(null, network)
@@ -114,27 +114,48 @@ module.exports.geneRegulationNetwork = (genomeId, type, cb) => {
     })
 }
 
-function generateDotGraph(network, cb) {
-    let graph = `digraph G {
-        node [color=black,style=bold];
-        edge [color=black,style=bold];\n`;
+function generateDotGraph(regulationNetworks, cb) {
+    let graph = "digraph G {\n";
 
-    graph += `${network.genomeId} [label="Genome ${network.genomeId}"];\n`;
-    graph += `${network.genomeId} -> {${network.regulons.map((r) => r.regulonId).join(' ')}}\n`;
+    for (let network of regulationNetworks) {
+        graph += `subgraph ${network.genomeId} {\n`;
+        // graph += `node [style=bold, shape=octagon];\n`;
 
-    for (let regulon of network.regulons) {
-        let id = regulon.regulonId;
-        graph += `${id} [label="(${regulon.regulationType})\\n${regulon.regulatorFamily}:${regulon.regulatorName}"]\n`;
-        graph += `subgraph cluster_${id} {
-            node [style=solid];
-            edge [color="${randomColor({seed: id, luminosity: "bright"})}",style=solid];
-            ${id} -> { ${regulon.sites.map((s) => s.geneVIMSSId).join(' ')} }
-        }\n`;
+        for (let regulator of network.regulators) {
+            graph += `subgraph ${regulator.vimssId} {\n`;
+            graph += `edge [color="${randomColor({seed: regulator.vimssId, luminosity: "bright"})}"]\n`;
+            graph += `\t${regulator.vimssId} [style=bold,shape=octagon];\n`;
+            graph += `\t${regulator.vimssId} -> { ${regulator.genes.map((g) => g.vimssId).join(' ')} }\n`
+            graph += '}\n';
+        }
+
+        graph += '}\n';
     }
-    
-    graph += '}';
+
+    graph += '}\n';
 
     cb(graph);
+
+    // let graph = `digraph G {
+    //     node [color=black,style=bold];
+    //     edge [color=black,style=bold];\n`;
+
+    // graph += `${network.genomeId} [label="Genome ${network.genomeId}"];\n`;
+    // graph += `${network.genomeId} -> {${network.regulons.map((r) => r.regulonId).join(' ')}}\n`;
+
+    // for (let regulon of network.regulons) {
+    //     let id = regulon.regulonId;
+    //     graph += `${id} [label="(${regulon.regulationType})\\n${regulon.regulatorFamily}:${regulon.regulatorName}"]\n`;
+    //     graph += `subgraph cluster_${id} {
+    //         node [style=solid];
+    //         edge [color="${randomColor({seed: id, luminosity: "bright"})}",style=solid];
+    //         ${id} -> { ${regulon.sites.map((s) => s.geneVIMSSId).join(' ')} }
+    //     }\n`;
+    // }
+    
+    // graph += '}';
+
+    // cb(graph);
 }
 
 // module.exports.genomeNetwork = (genomeId, type, cb) => {
